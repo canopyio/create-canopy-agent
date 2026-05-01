@@ -3,6 +3,9 @@
   "version": "0.0.2",
   "description": "Scaffold a pre-configured Canopy agent starter (trading, research, lead-gen, content, treasury, travel).",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "create-canopy-agent": "dist/cli.js"
   },
