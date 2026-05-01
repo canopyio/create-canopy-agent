@@ -38,6 +38,7 @@ const IGNORE = new Set([
   "yarn.lock",
   "pnpm-lock.yaml",
   ".DS_Store",
+  ".git",
 ]);
 
 export interface ScaffoldArgs {

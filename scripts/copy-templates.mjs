@@ -21,6 +21,7 @@ const IGNORE = new Set([
   "pnpm-lock.yaml",
   ".env",
   ".DS_Store",
+  ".git",
 ]);
 
 async function copyTree(src, dest) {
