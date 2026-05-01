@@ -1,10 +1,10 @@
 {
-  "name": "create-canopy-agent",
+  "name": "@canopy-ai/create-canopy-agent",
   "version": "0.0.1",
   "description": "Scaffold a pre-configured Canopy agent starter (trading, research, lead-gen, content, treasury, travel).",
   "type": "module",
   "bin": {
-    "create-canopy-agent": "./dist/cli.js"
+    "create-canopy-agent": "dist/cli.js"
   },
   "files": [
     "dist",
