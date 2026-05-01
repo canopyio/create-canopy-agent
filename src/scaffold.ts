@@ -48,13 +48,16 @@ export interface ScaffoldArgs {
   env: Record<string, string>;
 }
 
+export interface ScaffoldPreflightArgs {
+  starterSlug: string;
+  destDir: string;
+}
+
 /**
- * Copies the starter directory tree into destDir, applies token replacements
- * to package.json (project name) and writes .env from the supplied env map.
- *
- * Throws if destDir already exists with content.
+ * Verifies scaffold inputs before the CLI creates remote Canopy resources.
+ * Throws if the template is missing or destDir already exists with content.
  */
-export async function scaffold(args: ScaffoldArgs): Promise<void> {
+export async function preflightScaffold(args: ScaffoldPreflightArgs): Promise<void> {
   const root = templatesRoot();
   const src = path.join(root, args.starterSlug);
 
@@ -63,14 +66,34 @@ export async function scaffold(args: ScaffoldArgs): Promise<void> {
     throw new Error(`Template not found: ${src}`);
   }
 
-  await fs.mkdir(args.destDir, { recursive: true });
+  const destStat = await fs.stat(args.destDir).catch(() => null);
+  if (!destStat) return;
+  if (!destStat.isDirectory()) {
+    throw new Error(
+      `Destination ${args.destDir} exists and is not a directory. Pick a fresh path.`,
+    );
+  }
+
   const existingEntries = await fs.readdir(args.destDir);
   if (existingEntries.length > 0) {
     throw new Error(
       `Destination ${args.destDir} is not empty. Pick a fresh path or remove it first.`,
     );
   }
+}
 
+/**
+ * Copies the starter directory tree into destDir, applies token replacements
+ * to package.json (project name) and writes .env from the supplied env map.
+ *
+ * Throws if destDir already exists with content.
+ */
+export async function scaffold(args: ScaffoldArgs): Promise<void> {
+  await preflightScaffold(args);
+
+  const root = templatesRoot();
+  const src = path.join(root, args.starterSlug);
+  await fs.mkdir(args.destDir, { recursive: true });
   await copyTree(src, args.destDir);
   await rewritePackageJson(args.destDir, args.projectName);
   await writeEnv(args.destDir, args.env);

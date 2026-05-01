@@ -2,7 +2,7 @@
 import path from "node:path";
 import { input, password, select, confirm } from "@inquirer/prompts";
 import { CanopyApiClient, CanopyApiError, type OrgContext } from "./api.js";
-import { scaffold } from "./scaffold.js";
+import { preflightScaffold, scaffold } from "./scaffold.js";
 import { STARTERS, type StarterDef } from "./starters.js";
 import { bold, dim, fail, info, step, success, warn } from "./log.js";
 
@@ -41,6 +41,13 @@ async function main(): Promise<void> {
     })),
   });
   const starter = STARTERS.find((s) => s.slug === starterSlug)!;
+
+  try {
+    await preflightScaffold({ starterSlug: starter.slug, destDir });
+  } catch (err) {
+    fail(`Scaffold preflight failed: ${err instanceof Error ? err.message : String(err)}`);
+    process.exit(1);
+  }
 
   // 2. Connect to Canopy org via API key
   console.log("");

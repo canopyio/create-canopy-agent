@@ -1,7 +1,7 @@
 {
   "name": "@canopy-ai/create-canopy-agent",
   "version": "0.0.2",
-  "description": "Scaffold a pre-configured Canopy agent starter (trading, research, lead-gen, content, treasury, travel).",
+  "description": "Pre-built Canopy agent starter agents for common use cases.",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -15,6 +15,7 @@
   ],
   "scripts": {
     "build": "tsc && node scripts/copy-templates.mjs",
+    "test": "tsx --test test/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "start": "tsx src/cli.ts",
     "prepublishOnly": "npm run build"

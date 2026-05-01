@@ -3,7 +3,7 @@
 Scaffold a pre-configured Canopy agent starter and provision the matching policy + agent in your Canopy org — in one guided command.
 
 ```bash
-npx create-canopy-agent my-trading-bot
+npx @canopy-ai/create-canopy-agent my-trading-bot
 ```
 
 The CLI will:
