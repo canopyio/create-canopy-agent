@@ -1,6 +1,6 @@
 {
   "name": "@canopy-ai/create-canopy-agent",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Pre-built Canopy agent starter agents for common use cases.",
   "type": "module",
   "publishConfig": {
