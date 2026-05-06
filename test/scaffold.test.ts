@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { preflightScaffold } from "../src/scaffold.ts";
+import { preflightScaffold, scaffold } from "../src/scaffold.ts";
 
 async function tempDir(): Promise<string> {
   return mkdtemp(path.join(os.tmpdir(), "canopy-scaffold-test-"));
@@ -49,5 +49,23 @@ describe("preflightScaffold", () => {
         }),
       /Template not found/,
     );
+  });
+
+  it("writes generated .env with owner-only permissions", async () => {
+    const root = await tempDir();
+    const destDir = path.join(root, "new-project");
+
+    await scaffold({
+      starterSlug: "research-agent",
+      destDir,
+      projectName: "new-project",
+      env: {
+        CANOPY_MCP_TOKEN: "canopy_mcp_test",
+        CANOPY_AGENT_ID: "agt_123",
+      },
+    });
+
+    const envStat = await stat(path.join(destDir, ".env"));
+    assert.equal(envStat.mode & 0o777, 0o600);
   });
 });

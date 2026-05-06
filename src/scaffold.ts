@@ -138,5 +138,8 @@ async function writeEnv(dir: string, env: Record<string, string>): Promise<void>
     .filter(([, v]) => v.length > 0)
     .map(([k, v]) => `${k}=${v}`);
   if (lines.length === 0) return;
-  await fs.writeFile(path.join(dir, ".env"), lines.join("\n") + "\n", "utf8");
+  await fs.writeFile(path.join(dir, ".env"), lines.join("\n") + "\n", {
+    encoding: "utf8",
+    mode: 0o600,
+  });
 }

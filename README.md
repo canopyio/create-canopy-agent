@@ -13,14 +13,14 @@ The CLI will:
 1. Ask which starter to scaffold (trading-defi, research, lead-gen, content-creator, treasury-billpay, travel).
 2. Ask the agent name and approval threshold (with sensible per-starter defaults).
 3. **Authenticate.** Pick one of:
-   - **Browser** *(recommended)* — opens a consent page that previews the policy + agent that's about to be created. On Authorize, the **server** creates the policy + agent + grant in a single Postgres transaction and mints a revocable MCP token scoped to the new agent. The CLI never sees your org's primary API key.
+   - **Browser** *(recommended)* — opens a consent page that previews the policy + agent that's about to be created. On Authorize, the **server** creates the policy + agent + grant with cleanup on failure and mints a revocable MCP token scoped to the new agent. The CLI never sees your org's primary API key.
    - **Paste API key** — paste an `ak_live_…` from `dashboard/settings#api-keys`. The CLI then calls `/api/policies` + `/api/agents` itself with that key.
    - **`--api-key <key>` flag or `CANOPY_API_KEY` env var** — non-interactive (CI / scripted). Same path as Paste, but no prompt.
 4. Scaffold the starter project locally, write `.env` with the appropriate Canopy creds (MCP token for the browser path, API key for the paste path) + `CANOPY_AGENT_ID` + `ANTHROPIC_API_KEY`.
 
 The only key you paste manually is your Anthropic API key (`sk-ant-…`).
 
-**Audit trail.** In the browser path, the consent grant (`cli_grants` row) is bound to the new `agents` row in the same transaction — `SELECT a.* FROM agents a JOIN cli_grants g ON g.agent_id = a.agent_id` resolves cleanly to "agent created via this consent."
+**Audit trail.** In the browser path, the consent grant (`cli_grants` row) is bound to the new `agents` row, so `SELECT a.* FROM agents a JOIN cli_grants g ON g.agent_id = a.agent_id` resolves cleanly to "agent created via this consent."
 
 After scaffolding, if you also want Canopy available in your dev tools (Claude Code, Cursor, etc.) while you build, run `npx @canopy-ai/sdk connect` from the project root.
 
@@ -35,7 +35,7 @@ After scaffolding, if you also want Canopy available in your dev tools (Claude C
 | `treasury-billpay-agent` | Pay vendor invoices + recurring subs within budget |
 | `travel-agent` | Search flights/airport schedules; surface options before booking |
 
-All starters are built on [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript) with Canopy's hosted MCP server (`https://mcp.trycanopy.ai/mcp`). Zero Canopy code in the templates — the agent reaches Canopy via MCP with your API key + agent id passed as auth headers.
+All starters are built on [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript) with Canopy's hosted MCP server (`https://mcp.trycanopy.ai/mcp`). Zero Canopy code in the templates — the browser flow reaches Canopy via a revocable MCP token, while the API-key fallback uses your API key + agent id as auth headers.
 
 ## Requirements
 

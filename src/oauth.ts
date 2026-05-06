@@ -14,7 +14,7 @@ import type { AddressInfo } from "node:net";
  *
  * The CLI passes the chosen starter + agent name + approval choice as
  * query params on the consent URL. The consent submit handler validates
- * everything server-side, then in a single Postgres transaction:
+ * everything server-side, then creates a cleanup-safe scaffold grant:
  *   - inserts the policies row matching the starter preset (with the
  *     user-overridden approval fields),
  *   - inserts the agents row bound to that policy,
@@ -48,6 +48,8 @@ export interface AuthorizeScaffoldArgs {
   agentName: string;
   approvalRequired: boolean;
   approvalThresholdUsd: number | null;
+  openBrowser?: (url: string) => boolean;
+  onAuthorizeUrl?: (url: string) => void;
 }
 
 export interface AuthorizeScaffoldResult {
@@ -97,14 +99,15 @@ export async function authorizeScaffold(
       args.approvalThresholdUsd === null ? "null" : String(args.approvalThresholdUsd),
   });
   const authorizeUrl = `${normalizedBaseUrl}/cli/authorize?${params.toString()}`;
+  const browserOpener = args.openBrowser ?? openBrowser;
 
   process.stdout.write(`\nOpening your browser for consent…\n`);
   process.stdout.write(`If it doesn't open, visit:\n  ${authorizeUrl}\n\n`);
-  const opened = openBrowser(authorizeUrl);
+  args.onAuthorizeUrl?.(authorizeUrl);
+  const opened = browserOpener(authorizeUrl);
   if (!opened) {
-    listener.close();
-    throw new AuthorizeError(
-      "Could not open a browser. Re-run with --api-key or set CANOPY_API_KEY=ak_live_…",
+    process.stdout.write(
+      "Could not launch a browser automatically. Waiting for you to open the URL above…\n\n",
     );
   }
 
@@ -149,13 +152,13 @@ export async function authorizeScaffold(
     throw new AuthorizeError(`Grant exchange failed: ${detail}`);
   }
 
-  if (typeof body.mcp_token !== "string" || !body.mcp_token.startsWith("canopy_")) {
+  if (typeof body.mcp_token !== "string" || !body.mcp_token.startsWith("canopy_mcp_")) {
     throw new AuthorizeError("Grant response did not include a valid MCP token.");
   }
   if (typeof body.agent_id !== "string" || !body.agent_id) {
     throw new AuthorizeError("Grant response did not include an agent id.");
   }
-  if (typeof body.mcp_url !== "string") {
+  if (typeof body.mcp_url !== "string" || !isHttpUrl(body.mcp_url)) {
     throw new AuthorizeError("Grant response did not include an MCP URL.");
   }
 
@@ -175,6 +178,15 @@ export async function authorizeScaffold(
     org: { id: orgId, name: orgName },
     hostname,
   };
+}
+
+function isHttpUrl(raw: string): boolean {
+  try {
+    const parsed = new URL(raw);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
 }
 
 function sanitizeHostname(raw: string): string | null {
